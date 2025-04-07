@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Estudiante - Asistencia QR</title>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f9fc;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #3498db;
+    }
+    input[type="text"] {
+      padding: 10px;
+      width: 80%;
+      max-width: 300px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    #qr-reader {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Escanear QR - Estudiante</h1>
+  
+  <input type="text" id="matricula" placeholder="Matrícula">
+  <div id="qr-reader" style="width: 300px;"></div>
+  <p id="resultado"></p>
+  
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyB8eUQWM_Khgpcl0nES389BHjZEBLRBe2c",
+  authDomain: "classqr-75409.firebaseapp.com",
+  projectId: "classqr-75409",
+  storageBucket: "classqr-75409.firebasestorage.app",
+  messagingSenderId: "225302285627",
+  appId: "1:225302285627:web:6a438bba7453693b2a3b1e",
+  measurementId: "G-8F99Y30R1D"
+    };
+
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let escaneoEnCurso = false; // bandera para controlar el escaneo
+
+    const qrReader = new Html5Qrcode("qr-reader");
+    qrReader.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      qrCodeMessage => {
+        if (escaneoEnCurso) return; // Si ya se está registrando, ignorar
+        escaneoEnCurso = true; // Activar la bandera
+
+        const matricula = document.getElementById("matricula").value;
+        if (matricula) {
+          db.collection("asistencias")
+            .where("matricula", "==", matricula)
+            .where("clase", "==", qrCodeMessage)
+            .get()
+            .then((querySnapshot) => {
+              if (!querySnapshot.empty) {
+                document.getElementById("resultado").innerText = `⚠️ Ya registraste asistencia para esta clase.`;
+                qrReader.stop();
+              } else {
+                db.collection("asistencias").add({
+                  matricula: matricula,
+                  clase: qrCodeMessage,
+                  timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                })
+                .then(() => {
+                  document.getElementById("resultado").innerText = `✅ Asistencia registrada: ${matricula} en clase ${qrCodeMessage}`;
+                  qrReader.stop();
+                })
+                .catch(error => {
+                  console.error("Error al guardar la asistencia: ", error);
+                  escaneoEnCurso = false;
+                });
+              }
+            })
+            .catch(error => {
+              console.error("Error verificando duplicados: ", error);
+              escaneoEnCurso = false;
+            });
+        } else {
+          alert("Ingresa tu matrícula antes de escanear");
+          escaneoEnCurso = false;
+        }
+      },
+      error => {}
+    );
+  </script>
+</body>
+</html>

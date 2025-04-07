@@ -2,208 +2,38 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Asistencia con QR</title>
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+  <title>Bienvenido</title>
   <style>
-    * { box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: Arial, sans-serif;
       background: #f7f9fc;
-      margin: 0;
-      padding: 20px;
       color: #333;
+      text-align: center;
+      padding-top: 50px;
     }
     h1 {
-      color: #2c3e50;
-      text-align: center;
+      color: #3498db;
     }
-    h2 {
-      color: #2980b9;
-    }
-    input[type="text"] {
-      padding: 10px;
-      width: 80%;
-      max-width: 300px;
-      margin: 10px 0;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-    button {
-      background-color: #3498db;
+    .btn {
+      padding: 15px 30px;
+      margin: 10px;
+      font-size: 18px;
+      background-color: #2980b9;
       color: white;
-      padding: 10px 20px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      font-size: 16px;
     }
-    button:hover {
-      background-color: #2980b9;
-    }
-    .card {
-      background: white;
-      padding: 20px;
-      margin: 20px auto;
-      max-width: 400px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    #qr {
-      margin: 20px 0;
-    }
-    #resultado {
-      margin-top: 20px;
-      font-weight: bold;
-      color: green;
-    }
-    #qr-reader {
-      margin-top: 20px;
-    }
-    #asistenciasList {
-      background: #ecf0f1;
-      border-radius: 8px;
-      padding: 10px;
-      margin-top: 10px;
-    }
-    hr {
-      margin: 40px 0;
-      border: none;
-      border-top: 2px dashed #ccc;
+    .btn:hover {
+      background-color: #3498db;
     }
   </style>
 </head>
 <body>
-  <h1>Registro de Asistencia</h1>
-
-  <div id="profesor" class="card">
-    <h2>Generar QR (Profesor)</h2>
-    <input type="text" id="infoClase" placeholder="ID de clase + fecha (ej: algebra-05042025)">
-    <button onclick="generarQR()">Generar QR</button>
-    <div id="qr"></div>
-  </div>
-
-  <div id="verAsistencias" class="card">
-    <h2>Ver Asistencias por Clase</h2>
-    <input type="text" id="buscarClase" placeholder="Ej: algebra-05042025">
-    <button onclick="mostrarAsistencias()">Ver Lista</button>
-    <div id="asistenciasList"></div>
-  </div>
-
-  <hr>
-
-  <div id="estudiante" class="card">
-    <h2>Escanear QR (Estudiante)</h2>
-    <input type="text" id="matricula" placeholder="Matrícula">
-    <div id="qr-reader" style="width: 300px;"></div>
-    <p id="resultado"></p>
-  </div>
-
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyB8eUQWM_Khgpcl0nES389BHjZEBLRBe2c",
-  authDomain: "classqr-75409.firebaseapp.com",
-  projectId: "classqr-75409",
-  storageBucket: "classqr-75409.firebasestorage.app",
-  messagingSenderId: "225302285627",
-  appId: "1:225302285627:web:6a438bba7453693b2a3b1e",
-  measurementId: "G-8F99Y30R1D"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    function generarQR() {
-      const info = document.getElementById("infoClase").value;
-      const qrDiv = document.getElementById("qr");
-      qrDiv.innerHTML = "";
-      if (info) {
-        QRCode.toCanvas(info, { width: 200 }, function (err, canvas) {
-          if (err) console.error(err);
-          qrDiv.appendChild(canvas);
-        });
-      }
-    }
-
-    const qrReader = new Html5Qrcode("qr-reader");
-    let escaneoEnCurso = false; // bandera para controlar el escaneo
-
-function iniciarEscaneo() {
-  qrReader.start(
-    { facingMode: "environment" },
-    { fps: 10, qrbox: 250 },
-    qrCodeMessage => {
-      if (escaneoEnCurso) return; // Si ya se está registrando, ignorar
-      escaneoEnCurso = true; // Activar la bandera
-
-      const matricula = document.getElementById("matricula").value;
-      if (matricula) {
-        db.collection("asistencias").add({
-          matricula: matricula,
-          clase: qrCodeMessage,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        })
-        .then(() => {
-          document.getElementById("resultado").innerText = `✅ Asistencia registrada: ${matricula} en clase ${qrCodeMessage}`;
-          qrReader.stop(); // Detener escaneo
-        })
-        .catch(error => {
-          console.error("Error al guardar la asistencia: ", error);
-          escaneoEnCurso = false; // Permitir volver a intentar
-        });
-      } else {
-        alert("Ingresa tu matrícula antes de escanear");
-        escaneoEnCurso = false;
-      }
-    },
-    error => {
-      // Puedes mostrar errores del lector si lo deseas
-    }
-  );
-}
-
-
-    window.addEventListener("load", iniciarEscaneo);
-
-    function mostrarAsistencias() {
-      const clase = document.getElementById("buscarClase").value;
-      const contenedor = document.getElementById("asistenciasList");
-      contenedor.innerHTML = "Cargando...";
-
-      // Verificar si ya existe asistencia registrada para esa matrícula y clase
-db.collection("asistencias")
-  .where("matricula", "==", matricula)
-  .where("clase", "==", qrCodeMessage)
-  .get()
-  .then((querySnapshot) => {
-    if (!querySnapshot.empty) {
-      document.getElementById("resultado").innerText = `⚠️ Ya registraste asistencia para esta clase.`;
-      qrReader.stop();
-    } else {
-      // Si no existe, registrar la asistencia
-      db.collection("asistencias").add({
-        matricula: matricula,
-        clase: qrCodeMessage,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      })
-      .then(() => {
-        document.getElementById("resultado").innerText = `✅ Asistencia registrada: ${matricula} en clase ${qrCodeMessage}`;
-        qrReader.stop();
-      })
-      .catch(error => {
-        console.error("Error al guardar la asistencia: ", error);
-        escaneoEnCurso = false;
-      });
-    }
-  })
-  .catch(error => {
-    console.error("Error verificando duplicados: ", error);
-    escaneoEnCurso = false;
-  });
-
-    }
-  </script>
+  <h1>Bienvenido al Sistema de Asistencia</h1>
+  <p>Elige si eres Profesor o Estudiante</p>
+  
+  <button class="btn" onclick="window.location.href='profesor.html'">Soy Profesor</button>
+  <button class="btn" onclick="window.location.href='estudiante.html'">Soy Estudiante</button>
 </body>
 </html>
