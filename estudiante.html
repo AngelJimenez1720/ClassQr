@@ -7,7 +7,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
   <style>
-    * { box-sizing: border-box; }
+        * { box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #f7f9fc;
@@ -59,7 +59,8 @@
       color: green;
     }
     #qr-reader {
-      width: 300px;
+      width: 100%;
+      max-width: 300px;
       margin: 20px 0;
     }
     #estudiante {
@@ -74,6 +75,39 @@
       margin: 40px 0;
       border: none;
       border-top: 2px dashed #ccc;
+    }
+
+    /* Media Queries para Responsividad */
+    @media (max-width: 768px) {
+      #qr-reader {
+        width: 90%;
+        max-width: 350px;
+      }
+
+      input[type="text"] {
+        width: 90%;
+        max-width: 350px;
+      }
+
+      .card {
+        max-width: 90%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #qr-reader {
+        width: 100%;
+        max-width: 300px;
+      }
+
+      input[type="text"] {
+        width: 90%;
+        max-width: 300px;
+      }
+
+      .card {
+        max-width: 95%;
+      }
     }
   </style>
 </head>
