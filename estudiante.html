@@ -78,11 +78,15 @@
   </style>
 </head>
 <body>
-  <h1>Escanear QR - Estudiante</h1>
-  
-  <input type="text" id="matricula" placeholder="Matrícula">
-  <div id="qr-reader" style="width: 300px;"></div>
-  <p id="resultado"></p>
+    <h1>Registro de Asistencia</h1>
+
+    <!-- Sección Estudiante -->
+    <div id="estudiante" class="card">
+      <h2>Escanear QR (Estudiante)</h2>
+      <input type="text" id="matricula" placeholder="Matrícula">
+      <div id="qr-reader" style="width: 300px;"></div>
+      <p id="resultado"></p>
+    </div>
   
   <script>
     const firebaseConfig = {
