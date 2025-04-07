@@ -172,28 +172,37 @@ function iniciarEscaneo() {
       const contenedor = document.getElementById("asistenciasList");
       contenedor.innerHTML = "Cargando...";
 
-      db.collection("asistencias")
-        .where("clase", "==", clase)
-        .orderBy("timestamp", "asc")
-        .get()
-        .then(snapshot => {
-          if (snapshot.empty) {
-            contenedor.innerHTML = "No hay registros para esta clase.";
-            return;
-          }
+      // Verificar si ya existe asistencia registrada para esa matrícula y clase
+db.collection("asistencias")
+  .where("matricula", "==", matricula)
+  .where("clase", "==", qrCodeMessage)
+  .get()
+  .then((querySnapshot) => {
+    if (!querySnapshot.empty) {
+      document.getElementById("resultado").innerText = `⚠️ Ya registraste asistencia para esta clase.`;
+      qrReader.stop();
+    } else {
+      // Si no existe, registrar la asistencia
+      db.collection("asistencias").add({
+        matricula: matricula,
+        clase: qrCodeMessage,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      })
+      .then(() => {
+        document.getElementById("resultado").innerText = `✅ Asistencia registrada: ${matricula} en clase ${qrCodeMessage}`;
+        qrReader.stop();
+      })
+      .catch(error => {
+        console.error("Error al guardar la asistencia: ", error);
+        escaneoEnCurso = false;
+      });
+    }
+  })
+  .catch(error => {
+    console.error("Error verificando duplicados: ", error);
+    escaneoEnCurso = false;
+  });
 
-          let html = `<ul>`;
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            html += `<li>${data.matricula} - ${data.timestamp?.toDate().toLocaleString() || 'Sin fecha'}</li>`;
-          });
-          html += `</ul>`;
-          contenedor.innerHTML = html;
-        })
-        .catch(error => {
-          console.error("Error al obtener asistencias: ", error);
-          contenedor.innerHTML = "Error al cargar los datos.";
-        });
     }
   </script>
 </body>
