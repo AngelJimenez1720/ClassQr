@@ -128,32 +128,42 @@
     }
 
     const qrReader = new Html5Qrcode("qr-reader");
-    function iniciarEscaneo() {
-      qrReader.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        qrCodeMessage => {
-          const matricula = document.getElementById("matricula").value;
-          if (matricula) {
-            db.collection("asistencias").add({
-              matricula: matricula,
-              clase: qrCodeMessage,
-              timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            })
-            .then(() => {
-              document.getElementById("resultado").innerText = `✅ Asistencia registrada: ${matricula} en clase ${qrCodeMessage}`;
-              qrReader.stop();
-            })
-            .catch(error => {
-              console.error("Error al guardar la asistencia: ", error);
-            });
-          } else {
-            alert("Ingresa tu matrícula antes de escanear");
-          }
-        },
-        error => {}
-      );
+    let escaneoEnCurso = false; // bandera para controlar el escaneo
+
+function iniciarEscaneo() {
+  qrReader.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    qrCodeMessage => {
+      if (escaneoEnCurso) return; // Si ya se está registrando, ignorar
+      escaneoEnCurso = true; // Activar la bandera
+
+      const matricula = document.getElementById("matricula").value;
+      if (matricula) {
+        db.collection("asistencias").add({
+          matricula: matricula,
+          clase: qrCodeMessage,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        })
+        .then(() => {
+          document.getElementById("resultado").innerText = `✅ Asistencia registrada: ${matricula} en clase ${qrCodeMessage}`;
+          qrReader.stop(); // Detener escaneo
+        })
+        .catch(error => {
+          console.error("Error al guardar la asistencia: ", error);
+          escaneoEnCurso = false; // Permitir volver a intentar
+        });
+      } else {
+        alert("Ingresa tu matrícula antes de escanear");
+        escaneoEnCurso = false;
+      }
+    },
+    error => {
+      // Puedes mostrar errores del lector si lo deseas
     }
+  );
+}
+
 
     window.addEventListener("load", iniciarEscaneo);
 
